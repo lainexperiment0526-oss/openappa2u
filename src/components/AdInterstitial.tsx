@@ -5,6 +5,8 @@ import { useActiveCampaigns } from '@/hooks/useAdCampaigns';
 import { VideoAdOverlay } from './VideoAdOverlay';
 import { CampaignAdOverlay } from './CampaignAdOverlay';
 
+const isPiBrowser = () => /pibrowser|pi browser/i.test(navigator.userAgent);
+
 interface AdInterstitialProps {
   onComplete: () => void;
   trigger: 'auth' | 'app-open';
@@ -32,63 +34,34 @@ export function AdInterstitial({ onComplete, trigger }: AdInterstitialProps) {
     ];
     const hasInventory = combinedAds.length > 0;
 
+    // Only call Pi Ad Network if user is in Pi Browser
+    const canUsePiAds = isPiReady && isPiBrowser();
+
+    const showRandomAd = () => {
+      if (!hasInventory) { onComplete(); return; }
+      const randomAd = combinedAds[Math.floor(Math.random() * combinedAds.length)];
+      if (randomAd.kind === 'app') setShowingAppAd(randomAd.ad);
+      else setShowingCampaignAd(randomAd.ad);
+    };
+
     if (trigger === 'app-open') {
-      if (isPiReady) {
+      if (canUsePiAds) {
         showPiAd('interstitial').then((success) => {
-          if (!success && hasInventory) {
-            const randomAd = combinedAds[Math.floor(Math.random() * combinedAds.length)];
-            if (randomAd.kind === 'app') {
-              setShowingAppAd(randomAd.ad);
-            } else {
-              setShowingCampaignAd(randomAd.ad);
-            }
-          } else {
-            onComplete();
-          }
+          if (!success) showRandomAd();
+          else onComplete();
         });
         return;
       }
-
-      if (hasInventory) {
-        const randomAd = combinedAds[Math.floor(Math.random() * combinedAds.length)];
-        if (randomAd.kind === 'app') {
-          setShowingAppAd(randomAd.ad);
-        } else {
-          setShowingCampaignAd(randomAd.ad);
-        }
-        return;
-      }
-
-      onComplete();
+      showRandomAd();
       return;
     }
 
-    // Auth flow: prefer OpenApp inventory first, then fallback to Pi AdNetwork.
-    const usePiAd = !hasInventory && isPiReady;
-
-    if (usePiAd) {
+    // Auth flow
+    if (hasInventory) {
+      showRandomAd();
+    } else if (canUsePiAds) {
       const adType = Math.random() > 0.5 ? 'interstitial' : 'rewarded';
-      showPiAd(adType as 'interstitial' | 'rewarded').then((success) => {
-        if (!success && hasInventory) {
-          const randomAd = combinedAds[Math.floor(Math.random() * combinedAds.length)];
-          if (randomAd.kind === 'app') {
-            setShowingAppAd(randomAd.ad);
-          } else {
-            setShowingCampaignAd(randomAd.ad);
-          }
-        } else {
-          onComplete();
-        }
-      });
-    } else if (hasInventory) {
-      const randomAd = combinedAds[Math.floor(Math.random() * combinedAds.length)];
-      if (randomAd.kind === 'app') {
-        setShowingAppAd(randomAd.ad);
-      } else {
-        setShowingCampaignAd(randomAd.ad);
-      }
-    } else if (isPiReady) {
-      showPiAd('interstitial').then(() => onComplete());
+      showPiAd(adType as 'interstitial' | 'rewarded').then(() => onComplete());
     } else {
       onComplete();
     }
@@ -105,13 +78,7 @@ export function AdInterstitial({ onComplete, trigger }: AdInterstitialProps) {
     setShowingCampaignAd(null);
   }, []);
 
-  if (showingAppAd) {
-    return <VideoAdOverlay ad={showingAppAd} onClose={handleClose} onNavigate={handleNavigate} />;
-  }
-
-  if (showingCampaignAd) {
-    return <CampaignAdOverlay ad={showingCampaignAd} onClose={handleClose} />;
-  }
-
+  if (showingAppAd) return <VideoAdOverlay ad={showingAppAd} onClose={handleClose} onNavigate={handleNavigate} />;
+  if (showingCampaignAd) return <CampaignAdOverlay ad={showingCampaignAd} onClose={handleClose} />;
   return null;
 }

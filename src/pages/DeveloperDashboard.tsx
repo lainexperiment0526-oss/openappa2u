@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { usePiNetwork } from '@/hooks/usePiNetwork';
 import { Header } from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, Wallet, TrendingUp, DollarSign, ArrowDownToLine } from 'lucide-react';
+import { ArrowLeft, Wallet, TrendingUp, DollarSign } from 'lucide-react';
 import { PageLoader } from '@/components/PageLoader';
-import { PiAuthModal } from '@/components/PiAuthModal';
 
 interface EarningsSummary {
   app_id: string;
@@ -32,7 +30,7 @@ interface WithdrawalRequest {
 
 export default function DeveloperDashboard() {
   const { user, loading } = useAuth();
-  const { piUser, isPiReady, authenticateWithPi, isPiAuthenticated } = usePiNetwork();
+  
   const [earnings, setEarnings] = useState<EarningsSummary[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [totalGross, setTotalGross] = useState(0);
@@ -40,10 +38,11 @@ export default function DeveloperDashboard() {
   const [totalPlatformFee, setTotalPlatformFee] = useState(0);
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [piWalletAddress, setPiWalletAddress] = useState('');
+  const [openPayAccount, setOpenPayAccount] = useState('');
+  const [openPayUsername, setOpenPayUsername] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  const [showPiAuthModal, setShowPiAuthModal] = useState(false);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -133,20 +132,13 @@ export default function DeveloperDashboard() {
       toast.error('Insufficient balance');
       return;
     }
-    if (!piWalletAddress.trim()) {
-      toast.error('Enter your Pi wallet address');
+    if (!openPayAccount.trim()) {
+      toast.error('Enter your OpenPay account number');
       return;
     }
-    if (!isPiReady) {
-      toast.error('Pi authentication requires Pi Browser');
+    if (!openPayUsername.trim() || !openPayUsername.startsWith('@')) {
+      toast.error('Enter a valid OpenPay @username (e.g. @yourname)');
       return;
-    }
-    if (!isPiAuthenticated) {
-      const authed = await authenticateWithPi();
-      if (!authed) {
-        setShowPiAuthModal(true);
-        return;
-      }
     }
 
     setIsWithdrawing(true);
@@ -157,14 +149,15 @@ export default function DeveloperDashboard() {
           developer_id: user.id,
           amount,
           status: 'pending',
-          pi_wallet_address: piWalletAddress.trim(),
+          pi_wallet_address: `${openPayUsername.trim()} | ${openPayAccount.trim()}`,
         });
 
       if (error) throw error;
 
       toast.success('Withdrawal request submitted');
       setWithdrawAmount('');
-      setPiWalletAddress('');
+      setOpenPayAccount('');
+      setOpenPayUsername('');
       loadDashboardData();
     } catch (err: any) {
       toast.error(err.message || 'Withdrawal failed');
@@ -187,12 +180,7 @@ export default function DeveloperDashboard() {
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      <PiAuthModal
-        open={showPiAuthModal}
-        onOpenChange={setShowPiAuthModal}
-        title="Pi Sign-In Required"
-        description="OpenApp requires Pi authentication before sensitive actions like withdrawals."
-      />
+      
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-6">
         <Link to="/" className="inline-flex items-center gap-2 text-primary hover:underline mb-6">
@@ -201,7 +189,7 @@ export default function DeveloperDashboard() {
 
         <h1 className="text-2xl font-bold text-foreground mb-2">Developer Dashboard</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Pi account: {piUser?.username ? `@${piUser.username}` : 'Not connected'}
+          Withdraw earnings via OpenPay wallet
         </p>
 
         <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4">
@@ -230,14 +218,22 @@ export default function DeveloperDashboard() {
         <p className="text-xs text-muted-foreground mb-6">Revenue split: 70% Developer / 30% Platform Fee</p>
 
         <div className="rounded-2xl bg-card p-6 border border-border mb-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings (OpenPay)</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label>Pi Wallet Address</Label>
+              <Label>OpenPay @Username</Label>
               <Input
-                value={piWalletAddress}
-                onChange={(e) => setPiWalletAddress(e.target.value)}
-                placeholder="Enter your Pi wallet address"
+                value={openPayUsername}
+                onChange={(e) => setOpenPayUsername(e.target.value)}
+                placeholder="@yourusername"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>OpenPay Account Number</Label>
+              <Input
+                value={openPayAccount}
+                onChange={(e) => setOpenPayAccount(e.target.value)}
+                placeholder="Enter account number"
               />
             </div>
             <div className="space-y-2">
