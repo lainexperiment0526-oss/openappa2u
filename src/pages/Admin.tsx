@@ -415,51 +415,63 @@ export default function Admin() {
         </div>
 
         <div className="mt-6 rounded-2xl bg-card p-4 border border-border">
-          <h2 className="text-lg font-semibold text-foreground mb-3">Withdrawal Approvals</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Withdrawal Payouts</h2>
           {withdrawalRequests.length === 0 ? (
             <p className="text-sm text-muted-foreground">No withdrawal requests.</p>
           ) : (
-            <div className="space-y-2">
-              {withdrawalRequests.map((w) => (
-                <div key={w.id} className="rounded-xl bg-secondary/50 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">{Number(w.amount).toFixed(2)} pi</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(w.created_at).toLocaleDateString()} | Dev: {w.developer_id}
-                      </p>
-                      {w.pi_wallet_address && (
-                        <p className="text-xs text-muted-foreground">Wallet: {w.pi_wallet_address}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={w.status === 'completed' ? 'default' : w.status === 'pending' ? 'secondary' : 'destructive'}>
-                        {w.status}
-                      </Badge>
-                      {w.status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            disabled={processingWithdrawalId === w.id}
-                            onClick={() => updateWithdrawalStatus(w.id, 'completed')}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={processingWithdrawalId === w.id}
-                            onClick={() => updateWithdrawalStatus(w.id, 'rejected')}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
+            <div className="space-y-3">
+              {withdrawalRequests.map((w) => {
+                const devPayout = Number(w.amount);
+                const gross = devPayout / 0.7;
+                const platformFee = gross - devPayout;
+                const parts = (w.pi_wallet_address || '').split('|').map(s => s.trim());
+                const openPayUser = parts[0] || '—';
+                const openPayAcct = parts[1] || '—';
+
+                return (
+                  <div key={w.id} className="rounded-xl bg-secondary/50 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-foreground">{devPayout.toFixed(2)} Pi <span className="text-xs font-normal text-muted-foreground">(Dev Payout)</span></p>
+                        <p className="text-xs text-muted-foreground">
+                          Gross: {gross.toFixed(2)} Pi &middot; Platform Fee (30%): {platformFee.toFixed(2)} Pi
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          OpenPay: <span className="font-medium text-foreground">{openPayUser}</span> &middot; Acct: <span className="font-medium text-foreground">{openPayAcct}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(w.created_at).toLocaleDateString()} &middot; Dev ID: <span className="font-mono text-[10px]">{w.developer_id.slice(0, 8)}…</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge variant={w.status === 'completed' ? 'default' : w.status === 'pending' ? 'secondary' : 'destructive'}>
+                          {w.status}
+                        </Badge>
+                        {w.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              disabled={processingWithdrawalId === w.id}
+                              onClick={() => updateWithdrawalStatus(w.id, 'completed')}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={processingWithdrawalId === w.id}
+                              onClick={() => updateWithdrawalStatus(w.id, 'rejected')}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

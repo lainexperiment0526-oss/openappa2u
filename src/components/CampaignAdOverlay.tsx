@@ -73,33 +73,35 @@ export function CampaignAdOverlay({ ad, onClose }: CampaignAdOverlayProps) {
         </div>
       </div>
 
-      {/* FOOTER card like App Store */}
-      <div className="w-full z-[110] bg-black/90 backdrop-blur-xl border-t border-white/10 px-3 py-3 sm:px-6 md:px-8">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <span className="flex-1 min-w-0">
-            <p className="text-xs text-white/60">OpenApp &middot; Sponsored</p>
-            <h4 className="text-white font-medium text-sm truncate">{ad.title || ad.name}</h4>
-            <p className="text-xs text-white/60 truncate">{ad.description || ad.destination_url}</p>
-          </span>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {ad.media_type === 'video' && (
+      {/* Top card - appears only when skip button is visible (after 15s) */}
+      {canSkip && (
+        <div className="absolute top-14 left-0 right-0 z-[110] px-3 sm:px-6 md:px-8">
+          <div className="max-w-3xl mx-auto flex items-center gap-3 rounded-2xl bg-black/80 backdrop-blur-xl border border-white/10 px-3 py-3">
+            <span className="flex-1 min-w-0">
+              <p className="text-xs text-white/60">OpenApp &middot; Sponsored</p>
+              <h4 className="text-white font-medium text-sm truncate">{ad.title || ad.name}</h4>
+              <p className="text-xs text-white/60 truncate">{ad.description || ad.destination_url}</p>
+            </span>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {ad.media_type === 'video' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsMuted((prev) => !prev); }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
+                  aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
+                >
+                  {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                </button>
+              )}
               <button
-                onClick={(e) => { e.stopPropagation(); setIsMuted((prev) => !prev); }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
-                aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
+                onClick={(e) => { e.stopPropagation(); openDestination(); }}
+                className="rounded-full bg-blue-500 px-5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors whitespace-nowrap"
               >
-                {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                Get
               </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); openDestination(); }}
-              className="rounded-full bg-blue-500 px-5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors whitespace-nowrap"
-            >
-              Get
-            </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
