@@ -28,7 +28,8 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
   const { theme } = useTheme();
   const appId = (ad as any)?.app?.id ?? (ad as any)?.app_id;
   const buildDetailUrl = (id: string) => `/app/${id}?refresh=${Date.now()}`;
-  const [countdown, setCountdown] = useState(ad.skip_after_seconds || 5);
+  // Always use 15 seconds for skip timer
+  const [countdown, setCountdown] = useState(15);
   const [canSkip, setCanSkip] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -44,30 +45,12 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
   const getBadgeSrc = (app?: { name?: string | null; is_verified?: boolean | null; verified_until?: string | null } | null) => {
     const key = (app?.name || '').toLowerCase();
     const badgeMap: Record<string, { light: string; dark: string }> = {
-      'openapp': {
-        light: 'https://i.ibb.co/BVQYVbyb/verified.png',
-        dark: 'https://i.ibb.co/BVQYVbyb/verified.png',
-      },
-      'flappy pi': {
-        light: 'https://i.ibb.co/BVQYVbyb/verified.png',
-        dark: 'https://i.ibb.co/BVQYVbyb/verified.png',
-      },
-      'dropshare': {
-        light: 'https://i.ibb.co/BVQYVbyb/verified.png',
-        dark: 'https://i.ibb.co/BVQYVbyb/verified.png',
-      },
-      'drop share': {
-        light: 'https://i.ibb.co/BVQYVbyb/verified.png',
-        dark: 'https://i.ibb.co/BVQYVbyb/verified.png',
-      },
-      'droplink': {
-        light: 'https://i.ibb.co/BVQYVbyb/verified.png',
-        dark: 'https://i.ibb.co/BVQYVbyb/verified.png',
-      },
-      'mrwain hub': {
-        light: 'https://i.ibb.co/p6HtQ2c5/verify-3.png',
-        dark: 'https://i.ibb.co/p6HtQ2c5/verify-3.png',
-      },
+      'openapp': { light: 'https://i.ibb.co/BVQYVbyb/verified.png', dark: 'https://i.ibb.co/BVQYVbyb/verified.png' },
+      'flappy pi': { light: 'https://i.ibb.co/BVQYVbyb/verified.png', dark: 'https://i.ibb.co/BVQYVbyb/verified.png' },
+      'dropshare': { light: 'https://i.ibb.co/BVQYVbyb/verified.png', dark: 'https://i.ibb.co/BVQYVbyb/verified.png' },
+      'drop share': { light: 'https://i.ibb.co/BVQYVbyb/verified.png', dark: 'https://i.ibb.co/BVQYVbyb/verified.png' },
+      'droplink': { light: 'https://i.ibb.co/BVQYVbyb/verified.png', dark: 'https://i.ibb.co/BVQYVbyb/verified.png' },
+      'mrwain hub': { light: 'https://i.ibb.co/p6HtQ2c5/verify-3.png', dark: 'https://i.ibb.co/p6HtQ2c5/verify-3.png' },
     };
     const badge = badgeMap[key];
     const isSubscriptionVerified = !!app?.is_verified && !!app?.verified_until && new Date(app.verified_until).getTime() > Date.now();
@@ -130,27 +113,19 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
-      {/* Video */}
+      {/* Video area */}
       <div
         className="flex-1 relative"
         role="button"
         tabIndex={0}
         onClick={() => {
-          if (onNavigate) {
-            onNavigate();
-          } else {
-            onClose();
-          }
+          if (onNavigate) onNavigate(); else onClose();
           openAdLink();
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            if (onNavigate) {
-              onNavigate();
-            } else {
-              onClose();
-            }
+            if (onNavigate) onNavigate(); else onClose();
             openAdLink();
           }
         }}
@@ -166,14 +141,11 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
           onEnded={onClose}
         />
 
-        {/* Skip / Countdown button */}
+        {/* Skip / Countdown - top right */}
         <div className="absolute top-4 right-4">
           {canSkip ? (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
               className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur px-4 py-2 text-white text-sm font-medium hover:bg-black/80 transition-colors"
             >
               <X className="h-4 w-4" />
@@ -186,45 +158,34 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
           )}
         </div>
 
-        {/* Ad label */}
+        {/* Ad label - top left */}
         <div className="absolute top-4 left-4">
-          <span className="rounded bg-yellow-500/90 px-2 py-0.5 text-xs font-bold text-black uppercase">
-            Ad
-          </span>
+          <span className="rounded bg-yellow-500/90 px-2 py-0.5 text-xs font-bold text-black uppercase">Ad</span>
         </div>
-
       </div>
 
-      {/* Header app card */}
-      <div className="absolute top-16 left-4 right-4 z-[110]">
+      {/* FOOTER app card - positioned at the bottom like App Store */}
+      <div className="w-full z-[110] bg-black/90 backdrop-blur-xl border-t border-white/10 px-3 py-3 sm:px-6 md:px-8">
         <div
-          className="rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10 px-3 py-3 flex items-start gap-3"
+          className="max-w-3xl mx-auto flex items-center gap-3"
           role="button"
           tabIndex={0}
           onClick={() => {
-            if (onNavigate) {
-              onNavigate();
-            } else {
-              onClose();
-            }
+            if (onNavigate) onNavigate(); else onClose();
             openAdLink();
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              if (onNavigate) {
-                onNavigate();
-              } else {
-                onClose();
-              }
+              if (onNavigate) onNavigate(); else onClose();
               openAdLink();
             }
           }}
         >
-          <span className="flex-shrink-0 pt-0.5">
+          <span className="flex-shrink-0">
             <AppIcon src={ad.app.logo_url} name={ad.app.name} size="sm" />
           </span>
-          <span className="flex-1 min-w-0 pr-1">
+          <span className="flex-1 min-w-0">
             <p className="text-xs text-white/60">OpenApp &middot; Sponsored</p>
             <h4 className="text-white font-medium text-sm truncate flex items-center gap-2">
               {ad.app.name}
@@ -234,57 +195,38 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
             </h4>
             <p className="text-xs text-white/60 truncate">{ad.app.category?.name || 'App'}</p>
           </span>
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsMuted((prev) => !prev); }}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
+              aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
+            >
+              {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowDisclaimer(true); }}
+              className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
+            >
+              <Info className="h-3.5 w-3.5" />
+              About
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowDetails(true); }}
+              className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
+            >
+              View
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (onNavigate) {
-                  onNavigate();
-                } else {
-                  onClose();
-                }
+                if (onNavigate) onNavigate(); else onClose();
                 openAdLink();
               }}
               className="rounded-full bg-blue-500 px-5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors whitespace-nowrap"
             >
               Get
             </button>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMuted((prev) => !prev);
-                }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
-                aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDisclaimer(true);
-                }}
-                className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
-              >
-                <Info className="h-3.5 w-3.5" />
-                About
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDetails(true);
-                }}
-                className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
-              >
-                View
-              </button>
-            </div>
           </div>
-          {ad.app.has_in_app_purchases && (
-            <span className="text-[10px] text-white/40 absolute -bottom-5 right-4">In-App Purchases</span>
-          )}
         </div>
       </div>
 
@@ -309,9 +251,7 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground truncate flex items-center gap-2">
                     {ad.app.name}
-                    {getBadgeSrc(ad.app) && (
-                      <img src={getBadgeSrc(ad.app)} alt="Verified" className="h-5 w-5" />
-                    )}
+                    {getBadgeSrc(ad.app) && <img src={getBadgeSrc(ad.app)} alt="Verified" className="h-5 w-5" />}
                   </h3>
                   <p className="text-sm text-muted-foreground truncate">{ad.app.tagline || ad.app.category?.name || 'App'}</p>
                   <p className="mt-2 text-sm text-foreground/90 line-clamp-3">{ad.description || ad.title || 'Sponsored app'}</p>
@@ -326,21 +266,8 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
                     <h4 className="text-sm font-semibold text-foreground">Screenshots</h4>
                     <div className="mt-2 flex gap-3 overflow-x-auto scrollbar-hide -mx-5 px-5">
                       {screenshots.map((shot, idx) => (
-                        <button
-                          key={shot.id}
-                          type="button"
-                          onClick={() => {
-                            setPreviewIndex(idx);
-                            setPreviewOpen(true);
-                          }}
-                          className="flex-shrink-0"
-                          aria-label={`View ${ad.app.name} screenshot ${idx + 1}`}
-                        >
-                          <img
-                            src={shot.image_url}
-                            alt={`${ad.app.name} screenshot`}
-                            className="h-40 w-auto rounded-xl object-cover"
-                          />
+                        <button key={shot.id} type="button" onClick={() => { setPreviewIndex(idx); setPreviewOpen(true); }} className="flex-shrink-0">
+                          <img src={shot.image_url} alt={`${ad.app.name} screenshot`} className="h-40 w-auto rounded-xl object-cover" />
                         </button>
                       ))}
                     </div>
@@ -385,27 +312,18 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
 
             <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-background/95 px-5 py-4 backdrop-blur">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowDetails(false)}
-                  className="flex-1 rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground"
-                >
+                <button onClick={() => setShowDetails(false)} className="flex-1 rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground">
                   Close
                 </button>
-            <button
-              onClick={() => {
-                if (onNavigate) {
-                  onNavigate();
-                } else {
-                  onClose();
-                }
-                if (appId) {
-                  navigate(buildDetailUrl(appId));
-                }
-              }}
-              className="flex-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              View App
-            </button>
+                <button
+                  onClick={() => {
+                    if (onNavigate) onNavigate(); else onClose();
+                    if (appId) navigate(buildDetailUrl(appId));
+                  }}
+                  className="flex-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  View App
+                </button>
               </div>
             </div>
           </div>
@@ -414,43 +332,24 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
 
       {showDisclaimer && (
         <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 px-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-background p-6 text-left shadow-xl"
-          >
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-2xl border border-white/10 bg-background p-6 text-left shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-lg font-semibold text-foreground">Third-Party Applications</h3>
-              <button
-                onClick={() => setShowDisclaimer(false)}
-                className="rounded-full p-1 text-muted-foreground hover:text-foreground"
-                aria-label="Close disclaimer"
-              >
+              <button onClick={() => setShowDisclaimer(false)} className="rounded-full p-1 text-muted-foreground hover:text-foreground" aria-label="Close disclaimer">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <p>
-                All applications listed on OpenApp are third-party applications developed and maintained by
-                independent developers. These apps are not owned, operated, or endorsed by OpenApp or the
-                mrwain organization.
-              </p>
+              <p>All applications listed on OpenApp are third-party applications developed and maintained by independent developers. These apps are not owned, operated, or endorsed by OpenApp or the mrwain organization.</p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>Each app is owned and operated by its respective developer.</li>
                 <li>App functionality, security, and privacy policies are managed by individual developers.</li>
                 <li>Always review each app&apos;s terms of service and privacy policy before use.</li>
               </ul>
-              <p>
-                Learn more on the <Link to="/about" className="text-primary hover:underline">About OpenApp</Link> page.
-              </p>
+              <p>Learn more on the <Link to="/about" className="text-primary hover:underline">About OpenApp</Link> page.</p>
             </div>
             <div className="mt-5 flex justify-end">
-              <button
-                onClick={() => setShowDisclaimer(false)}
-                className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Got it
-              </button>
+              <button onClick={() => setShowDisclaimer(false)} className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Got it</button>
             </div>
           </div>
         </div>
