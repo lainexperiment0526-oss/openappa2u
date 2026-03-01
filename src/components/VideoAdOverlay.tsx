@@ -164,71 +164,73 @@ export function VideoAdOverlay({ ad, onClose, onNavigate }: VideoAdOverlayProps)
         </div>
       </div>
 
-      {/* FOOTER app card - positioned at the bottom like App Store */}
-      <div className="w-full z-[110] bg-black/90 backdrop-blur-xl border-t border-white/10 px-3 py-3 sm:px-6 md:px-8">
-        <div
-          className="max-w-3xl mx-auto flex items-center gap-3"
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            if (onNavigate) onNavigate(); else onClose();
-            openAdLink();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
+      {/* Top app card - appears only when skip button is visible (after 15s) */}
+      {canSkip && (
+        <div className="absolute top-14 left-0 right-0 z-[110] px-3 sm:px-6 md:px-8">
+          <div
+            className="max-w-3xl mx-auto flex items-center gap-3 rounded-2xl bg-black/80 backdrop-blur-xl border border-white/10 px-3 py-3"
+            role="button"
+            tabIndex={0}
+            onClick={() => {
               if (onNavigate) onNavigate(); else onClose();
               openAdLink();
-            }
-          }}
-        >
-          <span className="flex-shrink-0">
-            <AppIcon src={ad.app.logo_url} name={ad.app.name} size="sm" />
-          </span>
-          <span className="flex-1 min-w-0">
-            <p className="text-xs text-white/60">OpenApp &middot; Sponsored</p>
-            <h4 className="text-white font-medium text-sm truncate flex items-center gap-2">
-              {ad.app.name}
-              {getBadgeSrc(ad.app) && (
-                <img src={getBadgeSrc(ad.app)} alt="Verified" className="h-4 w-4" />
-              )}
-            </h4>
-            <p className="text-xs text-white/60 truncate">{ad.app.category?.name || 'App'}</p>
-          </span>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); setIsMuted((prev) => !prev); }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
-              aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
-            >
-              {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowDisclaimer(true); }}
-              className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
-            >
-              <Info className="h-3.5 w-3.5" />
-              About
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowDetails(true); }}
-              className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
-            >
-              View
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
                 if (onNavigate) onNavigate(); else onClose();
                 openAdLink();
-              }}
-              className="rounded-full bg-blue-500 px-5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors whitespace-nowrap"
-            >
-              Get
-            </button>
+              }
+            }}
+          >
+            <span className="flex-shrink-0">
+              <AppIcon src={ad.app.logo_url} name={ad.app.name} size="sm" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <p className="text-xs text-white/60">OpenApp &middot; Sponsored</p>
+              <h4 className="text-white font-medium text-sm truncate flex items-center gap-2">
+                {ad.app.name}
+                {getBadgeSrc(ad.app) && (
+                  <img src={getBadgeSrc(ad.app)} alt="Verified" className="h-4 w-4" />
+                )}
+              </h4>
+              <p className="text-xs text-white/60 truncate">{ad.app.category?.name || 'App'}</p>
+            </span>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsMuted((prev) => !prev); }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/15"
+                aria-label={isMuted ? 'Unmute ad' : 'Mute ad'}
+              >
+                {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowDisclaimer(true); }}
+                className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
+              >
+                <Info className="h-3.5 w-3.5" />
+                About
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowDetails(true); }}
+                className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/15 whitespace-nowrap"
+              >
+                View
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onNavigate) onNavigate(); else onClose();
+                  openAdLink();
+                }}
+                className="rounded-full bg-blue-500 px-5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors whitespace-nowrap"
+              >
+                Get
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Slide-up app details */}
       <div
