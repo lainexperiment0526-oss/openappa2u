@@ -145,6 +145,44 @@ export default function Admin() {
     }
   };
 
+  const handleA2uSend = async () => {
+    if (!a2uUid.trim() || !a2uAmount.trim() || !a2uMemo.trim()) {
+      toast.error('Fill in all A2U fields');
+      return;
+    }
+    const amount = parseFloat(a2uAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    setA2uSending(true);
+    try {
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${baseUrl}/functions/v1/pi-a2u-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          userUid: a2uUid.trim(),
+          amount,
+          memo: a2uMemo.trim(),
+          metadata: { type: 'admin_a2u', sent_by: user?.id },
+          supabaseUserId: user?.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'A2U payment failed');
+      toast.success(`Sent ${amount} Pi! TxID: ${data.txid?.slice(0, 12)}...`);
+      setA2uUid('');
+      setA2uAmount('');
+      setA2uMemo('');
+    } catch (err: any) {
+      toast.error(err.message || 'A2U payment failed');
+    } finally {
+      setA2uSending(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
