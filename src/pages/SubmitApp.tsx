@@ -751,7 +751,7 @@ export default function SubmitApp() {
             <h3 className="font-semibold text-foreground">App Details</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">Category</Label>
                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                   <SelectTrigger disabled={categoriesLoading || !!categoriesError}>
                     <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category"} />
