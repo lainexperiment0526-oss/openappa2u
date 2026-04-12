@@ -306,8 +306,8 @@ export default function SubmitApp() {
   };
 
   const handleSaveDraft = async () => {
-    if (!formData.name || !formData.website_url || !formData.category_id || formData.languages.length === 0) {
-      toast.error('Name, website URL, category, and at least one language are required to save draft');
+    if (!formData.name || !formData.website_url) {
+      toast.error('App name and website URL are required to save draft');
       return;
     }
     setDraftActionLoading('save');
@@ -359,8 +359,8 @@ export default function SubmitApp() {
   };
 
   const validateBeforePayment = () => {
-    if (!formData.name || !formData.website_url || !formData.category_id || formData.languages.length === 0) {
-      toast.error('Name, website URL, category, and at least one language are required');
+    if (!formData.name || !formData.website_url) {
+      toast.error('App name and website URL are required');
       return false;
     }
     if (formData.pricing_model === 'paid') {
@@ -449,8 +449,8 @@ export default function SubmitApp() {
 
   const submitApp = async () => {
     if (!user) return;
-    if (!formData.category_id || formData.languages.length === 0) {
-      toast.error('Please select a category and at least one language');
+    if (!formData.name || !formData.website_url) {
+      toast.error('App name and website URL are required');
       setStep('details');
       return;
     }
@@ -751,7 +751,7 @@ export default function SubmitApp() {
             <h3 className="font-semibold text-foreground">App Details</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">Category</Label>
                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                   <SelectTrigger disabled={categoriesLoading || !!categoriesError}>
                     <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category"} />
