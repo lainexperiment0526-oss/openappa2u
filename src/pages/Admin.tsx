@@ -517,6 +517,48 @@ export default function Admin() {
             </div>
           )}
         </div>
+
+        {/* A2U Payment - Send Pi to Users */}
+        <div className="mt-6 rounded-2xl bg-card p-4 border border-border">
+          <h2 className="text-lg font-semibold text-foreground mb-3">Send Pi to User (A2U)</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Send Pi directly from the app wallet to a user using the Pi A2U payment flow.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Pi User UID</Label>
+              <Input
+                value={a2uUid}
+                onChange={(e) => setA2uUid(e.target.value)}
+                placeholder="User's Pi UID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Amount (Pi)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={a2uAmount}
+                onChange={(e) => setA2uAmount(e.target.value)}
+                placeholder="e.g. 3.14"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Memo</Label>
+              <Input
+                value={a2uMemo}
+                onChange={(e) => setA2uMemo(e.target.value)}
+                placeholder="e.g. Withdrawal payout"
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <Button onClick={handleA2uSend} disabled={a2uSending}>
+              {a2uSending ? 'Sending...' : 'Send Pi'}
+            </Button>
+          </div>
+        </div>
       </main>
 
       {/* Edit Dialog */}
