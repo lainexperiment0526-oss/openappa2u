@@ -67,6 +67,10 @@ export default function Admin() {
   const [appFinanceRows, setAppFinanceRows] = useState<Array<{ app_id: string; app_name: string; gross: number; developer: number; platform: number }>>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<AdminWithdrawal[]>([]);
   const [processingWithdrawalId, setProcessingWithdrawalId] = useState<string | null>(null);
+  const [a2uUid, setA2uUid] = useState('');
+  const [a2uAmount, setA2uAmount] = useState('');
+  const [a2uMemo, setA2uMemo] = useState('');
+  const [a2uSending, setA2uSending] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -138,6 +142,44 @@ export default function Admin() {
       toast.error(error.message || 'Failed to update withdrawal');
     } finally {
       setProcessingWithdrawalId(null);
+    }
+  };
+
+  const handleA2uSend = async () => {
+    if (!a2uUid.trim() || !a2uAmount.trim() || !a2uMemo.trim()) {
+      toast.error('Fill in all A2U fields');
+      return;
+    }
+    const amount = parseFloat(a2uAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    setA2uSending(true);
+    try {
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${baseUrl}/functions/v1/pi-a2u-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          userUid: a2uUid.trim(),
+          amount,
+          memo: a2uMemo.trim(),
+          metadata: { type: 'admin_a2u', sent_by: user?.id },
+          supabaseUserId: user?.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'A2U payment failed');
+      toast.success(`Sent ${amount} Pi! TxID: ${data.txid?.slice(0, 12)}...`);
+      setA2uUid('');
+      setA2uAmount('');
+      setA2uMemo('');
+    } catch (err: any) {
+      toast.error(err.message || 'A2U payment failed');
+    } finally {
+      setA2uSending(false);
     }
   };
 
@@ -474,6 +516,48 @@ export default function Admin() {
               })}
             </div>
           )}
+        </div>
+
+        {/* A2U Payment - Send Pi to Users */}
+        <div className="mt-6 rounded-2xl bg-card p-4 border border-border">
+          <h2 className="text-lg font-semibold text-foreground mb-3">Send Pi to User (A2U)</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Send Pi directly from the app wallet to a user using the Pi A2U payment flow.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Pi User UID</Label>
+              <Input
+                value={a2uUid}
+                onChange={(e) => setA2uUid(e.target.value)}
+                placeholder="User's Pi UID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Amount (Pi)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={a2uAmount}
+                onChange={(e) => setA2uAmount(e.target.value)}
+                placeholder="e.g. 3.14"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Memo</Label>
+              <Input
+                value={a2uMemo}
+                onChange={(e) => setA2uMemo(e.target.value)}
+                placeholder="e.g. Withdrawal payout"
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <Button onClick={handleA2uSend} disabled={a2uSending}>
+              {a2uSending ? 'Sending...' : 'Send Pi'}
+            </Button>
+          </div>
         </div>
       </main>
 
