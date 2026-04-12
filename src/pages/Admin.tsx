@@ -67,6 +67,10 @@ export default function Admin() {
   const [appFinanceRows, setAppFinanceRows] = useState<Array<{ app_id: string; app_name: string; gross: number; developer: number; platform: number }>>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<AdminWithdrawal[]>([]);
   const [processingWithdrawalId, setProcessingWithdrawalId] = useState<string | null>(null);
+  const [a2uUid, setA2uUid] = useState('');
+  const [a2uAmount, setA2uAmount] = useState('');
+  const [a2uMemo, setA2uMemo] = useState('');
+  const [a2uSending, setA2uSending] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
