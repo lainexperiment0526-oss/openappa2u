@@ -153,7 +153,8 @@ export default function DeveloperDashboard() {
           amount,
           status: 'pending',
           pi_wallet_address: `${openPayUsername.trim()} | ${openPayAccount.trim()}`,
-        });
+          pi_uid: piUid.trim() || (piUser?.uid ?? null),
+        } as any);
 
       if (error) throw error;
 
@@ -221,8 +222,30 @@ export default function DeveloperDashboard() {
         <p className="text-xs text-muted-foreground mb-6">Revenue split: 70% Developer / 30% Platform Fee</p>
 
         <div className="rounded-2xl bg-card p-6 border border-border mb-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings (OpenPay)</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings</h2>
+          
+          {/* Pi UID auto-fill from Pi auth */}
+          {isPiReady && !piUser && (
+            <div className="mb-4 p-3 rounded-xl bg-secondary/50 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Authenticate with Pi to auto-fill your Pi UID for A2U payouts</p>
+              <Button size="sm" variant="outline" onClick={authenticateWithPi}>Connect Pi</Button>
+            </div>
+          )}
+          {piUser && (
+            <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+              <p className="text-sm text-foreground">Pi connected: <span className="font-mono font-medium">{piUser.username}</span></p>
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
+              <Label>Pi UID (for A2U payout)</Label>
+              <Input
+                value={piUid || piUser?.uid || ''}
+                onChange={(e) => setPiUid(e.target.value)}
+                placeholder="Your Pi User UID"
+              />
+            </div>
             <div className="space-y-2">
               <Label>OpenPay @Username</Label>
               <Input
