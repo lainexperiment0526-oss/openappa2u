@@ -41,10 +41,9 @@ export default function DeveloperDashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [openPayAccount, setOpenPayAccount] = useState('');
   const [openPayUsername, setOpenPayUsername] = useState('');
-  const [piUid, setPiUid] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  const { piUser, isPiReady, authenticateWithPi } = usePiNetwork();
+  const { piUser, isPiReady, authenticateWithPi, piLoading } = usePiNetwork();
   
 
   useEffect(() => {
@@ -126,6 +125,12 @@ export default function DeveloperDashboard() {
   const handleWithdraw = async () => {
     if (!user) return;
 
+    // Require Pi authentication for A2U payout
+    if (!piUser) {
+      toast.error('Please authenticate with Pi first to enable A2U payouts');
+      return;
+    }
+
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Enter a valid amount');
@@ -133,14 +138,6 @@ export default function DeveloperDashboard() {
     }
     if (amount > availableBalance) {
       toast.error('Insufficient balance');
-      return;
-    }
-    if (!openPayAccount.trim()) {
-      toast.error('Enter your OpenPay account number');
-      return;
-    }
-    if (!openPayUsername.trim() || !openPayUsername.startsWith('@')) {
-      toast.error('Enter a valid OpenPay @username (e.g. @yourname)');
       return;
     }
 
@@ -152,8 +149,10 @@ export default function DeveloperDashboard() {
           developer_id: user.id,
           amount,
           status: 'pending',
-          pi_wallet_address: `${openPayUsername.trim()} | ${openPayAccount.trim()}`,
-          pi_uid: piUid.trim() || (piUser?.uid ?? null),
+          pi_wallet_address: openPayUsername.trim() && openPayAccount.trim()
+            ? `${openPayUsername.trim()} | ${openPayAccount.trim()}`
+            : null,
+          pi_uid: piUser.uid,
         } as any);
 
       if (error) throw error;
