@@ -41,10 +41,9 @@ export default function DeveloperDashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [openPayAccount, setOpenPayAccount] = useState('');
   const [openPayUsername, setOpenPayUsername] = useState('');
-  const [piUid, setPiUid] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  const { piUser, isPiReady, authenticateWithPi } = usePiNetwork();
+  const { piUser, isPiReady, authenticateWithPi, piLoading } = usePiNetwork();
   
 
   useEffect(() => {
@@ -126,6 +125,12 @@ export default function DeveloperDashboard() {
   const handleWithdraw = async () => {
     if (!user) return;
 
+    // Require Pi authentication for A2U payout
+    if (!piUser) {
+      toast.error('Please authenticate with Pi first to enable A2U payouts');
+      return;
+    }
+
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Enter a valid amount');
@@ -133,14 +138,6 @@ export default function DeveloperDashboard() {
     }
     if (amount > availableBalance) {
       toast.error('Insufficient balance');
-      return;
-    }
-    if (!openPayAccount.trim()) {
-      toast.error('Enter your OpenPay account number');
-      return;
-    }
-    if (!openPayUsername.trim() || !openPayUsername.startsWith('@')) {
-      toast.error('Enter a valid OpenPay @username (e.g. @yourname)');
       return;
     }
 
@@ -152,8 +149,10 @@ export default function DeveloperDashboard() {
           developer_id: user.id,
           amount,
           status: 'pending',
-          pi_wallet_address: `${openPayUsername.trim()} | ${openPayAccount.trim()}`,
-          pi_uid: piUid.trim() || (piUser?.uid ?? null),
+          pi_wallet_address: openPayUsername.trim() && openPayAccount.trim()
+            ? `${openPayUsername.trim()} | ${openPayAccount.trim()}`
+            : null,
+          pi_uid: piUser.uid,
         } as any);
 
       if (error) throw error;
@@ -224,30 +223,29 @@ export default function DeveloperDashboard() {
         <div className="rounded-2xl bg-card p-6 border border-border mb-8">
           <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings</h2>
           
-          {/* Pi UID auto-fill from Pi auth */}
+          {/* Pi authentication for A2U payouts */}
           {isPiReady && !piUser && (
             <div className="mb-4 p-3 rounded-xl bg-secondary/50 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Authenticate with Pi to auto-fill your Pi UID for A2U payouts</p>
-              <Button size="sm" variant="outline" onClick={authenticateWithPi}>Connect Pi</Button>
+              <p className="text-sm text-muted-foreground">Authenticate with Pi to enable withdrawals via A2U</p>
+              <Button size="sm" variant="outline" onClick={authenticateWithPi} disabled={piLoading}>
+                {piLoading ? 'Connecting...' : 'Connect Pi'}
+              </Button>
+            </div>
+          )}
+          {!isPiReady && (
+            <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-muted-foreground">Pi SDK not available. Please open this app in Pi Browser to withdraw.</p>
             </div>
           )}
           {piUser && (
             <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-              <p className="text-sm text-foreground">Pi connected: <span className="font-mono font-medium">{piUser.username}</span></p>
+              <p className="text-sm text-foreground">✅ Pi connected: <span className="font-mono font-medium">@{piUser.username}</span> — withdrawals will be sent via A2U</p>
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <Label>Pi UID (for A2U payout)</Label>
-              <Input
-                value={piUid || piUser?.uid || ''}
-                onChange={(e) => setPiUid(e.target.value)}
-                placeholder="Your Pi User UID"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>OpenPay @Username</Label>
+              <Label>OpenPay @Username (optional)</Label>
               <Input
                 value={openPayUsername}
                 onChange={(e) => setOpenPayUsername(e.target.value)}
@@ -255,7 +253,7 @@ export default function DeveloperDashboard() {
               />
             </div>
             <div className="space-y-2">
-              <Label>OpenPay Account Number</Label>
+              <Label>OpenPay Account Number (optional)</Label>
               <Input
                 value={openPayAccount}
                 onChange={(e) => setOpenPayAccount(e.target.value)}
@@ -276,8 +274,8 @@ export default function DeveloperDashboard() {
             </div>
           </div>
           <div className="mt-3 flex justify-end">
-            <Button onClick={handleWithdraw} disabled={isWithdrawing || availableBalance <= 0}>
-              {isWithdrawing ? 'Processing...' : 'Withdraw'}
+            <Button onClick={handleWithdraw} disabled={isWithdrawing || availableBalance <= 0 || !piUser}>
+              {isWithdrawing ? 'Processing...' : 'Withdraw via A2U'}
             </Button>
           </div>
         </div>
