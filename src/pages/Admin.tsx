@@ -505,6 +505,12 @@ export default function Admin() {
                         <p className="text-xs text-muted-foreground">
                           OpenPay: <span className="font-medium text-foreground">{openPayUser}</span> &middot; Acct: <span className="font-medium text-foreground">{openPayAcct}</span>
                         </p>
+                        {w.pi_uid && (
+                          <p className="text-xs text-muted-foreground">
+                            Pi UID: <span className="font-mono font-medium text-foreground">{w.pi_uid.slice(0, 12)}…</span>
+                            <span className="ml-1 text-green-600">(A2U ready)</span>
+                          </p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           {new Date(w.created_at).toLocaleDateString()} &middot; Dev ID: <span className="font-mono text-[10px]">{w.developer_id.slice(0, 8)}…</span>
                         </p>
