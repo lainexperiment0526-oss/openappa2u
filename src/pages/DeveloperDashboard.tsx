@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { usePiNetwork } from '@/hooks/usePiNetwork';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,7 +41,10 @@ export default function DeveloperDashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [openPayAccount, setOpenPayAccount] = useState('');
   const [openPayUsername, setOpenPayUsername] = useState('');
+  const [piUid, setPiUid] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+  const { piUser, isPiReady, authenticateWithPi } = usePiNetwork();
   const [loadingData, setLoadingData] = useState(true);
   
 
