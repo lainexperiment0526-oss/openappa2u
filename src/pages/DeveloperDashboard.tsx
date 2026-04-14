@@ -45,7 +45,6 @@ export default function DeveloperDashboard() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const { piUser, isPiReady, authenticateWithPi } = usePiNetwork();
-  const [loadingData, setLoadingData] = useState(true);
   
 
   useEffect(() => {
