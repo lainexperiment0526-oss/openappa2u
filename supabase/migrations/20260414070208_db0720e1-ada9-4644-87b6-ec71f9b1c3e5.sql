@@ -1,0 +1,1 @@
+ALTER TABLE public.withdrawal_requests ADD COLUMN pi_uid text;
