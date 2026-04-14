@@ -31,6 +31,7 @@ interface AdminWithdrawal {
   amount: number;
   status: string;
   pi_wallet_address: string | null;
+  pi_uid: string | null;
   created_at: string;
 }
 
