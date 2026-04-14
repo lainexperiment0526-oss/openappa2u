@@ -140,7 +140,7 @@ export function PiProvider({ children }: { children: ReactNode }) {
     try {
       setPiLoading(true);
       const auth = await window.Pi.authenticate(
-        ['payments', 'username'],
+        ['payments', 'username', 'wallet_address'],
         onIncompletePaymentFound
       );
       const user: PiUser = {

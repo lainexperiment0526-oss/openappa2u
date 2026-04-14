@@ -31,6 +31,7 @@ interface AdminWithdrawal {
   amount: number;
   status: string;
   pi_wallet_address: string | null;
+  pi_uid: string | null;
   created_at: string;
 }
 
@@ -119,14 +120,37 @@ export default function Admin() {
 
     const { data: withdrawals } = await supabase
       .from('withdrawal_requests')
-      .select('id, developer_id, amount, status, pi_wallet_address, created_at')
+      .select('id, developer_id, amount, status, pi_wallet_address, created_at, pi_uid')
       .order('created_at', { ascending: false });
-    setWithdrawalRequests((withdrawals || []) as AdminWithdrawal[]);
+    setWithdrawalRequests((withdrawals || []) as unknown as AdminWithdrawal[]);
   };
 
   const updateWithdrawalStatus = async (id: string, status: 'completed' | 'rejected') => {
     setProcessingWithdrawalId(id);
     try {
+      // If approving and pi_uid is available, trigger A2U payout
+      if (status === 'completed') {
+        const withdrawal = withdrawalRequests.find(w => w.id === id);
+        if (withdrawal?.pi_uid) {
+          const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const res = await fetch(`${baseUrl}/functions/v1/pi-a2u-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'send',
+              userUid: withdrawal.pi_uid,
+              amount: Number(withdrawal.amount),
+              memo: `Withdrawal payout #${id.slice(0, 8)}`,
+              metadata: { type: 'withdrawal_payout', withdrawal_id: id, developer_id: withdrawal.developer_id },
+              supabaseUserId: user?.id,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'A2U payout failed');
+          toast.success(`A2U payout sent! TxID: ${data.txid?.slice(0, 12)}...`);
+        }
+      }
+
       const payload: Record<string, any> = { status };
       if (status === 'completed') {
         payload.processed_at = new Date().toISOString();
@@ -481,6 +505,12 @@ export default function Admin() {
                         <p className="text-xs text-muted-foreground">
                           OpenPay: <span className="font-medium text-foreground">{openPayUser}</span> &middot; Acct: <span className="font-medium text-foreground">{openPayAcct}</span>
                         </p>
+                        {w.pi_uid && (
+                          <p className="text-xs text-muted-foreground">
+                            Pi UID: <span className="font-mono font-medium text-foreground">{w.pi_uid.slice(0, 12)}…</span>
+                            <span className="ml-1 text-green-600">(A2U ready)</span>
+                          </p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           {new Date(w.created_at).toLocaleDateString()} &middot; Dev ID: <span className="font-mono text-[10px]">{w.developer_id.slice(0, 8)}…</span>
                         </p>

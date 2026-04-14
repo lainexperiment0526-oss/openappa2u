@@ -938,6 +938,7 @@ export type Database = {
           created_at: string
           developer_id: string
           id: string
+          pi_uid: string | null
           pi_wallet_address: string | null
           processed_at: string | null
           status: string
@@ -949,6 +950,7 @@ export type Database = {
           created_at?: string
           developer_id: string
           id?: string
+          pi_uid?: string | null
           pi_wallet_address?: string | null
           processed_at?: string | null
           status?: string
@@ -960,6 +962,7 @@ export type Database = {
           created_at?: string
           developer_id?: string
           id?: string
+          pi_uid?: string | null
           pi_wallet_address?: string | null
           processed_at?: string | null
           status?: string
