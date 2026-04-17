@@ -125,12 +125,6 @@ export default function DeveloperDashboard() {
   const handleWithdraw = async () => {
     if (!user) return;
 
-    // Require Pi authentication for A2U payout
-    if (!piUser) {
-      toast.error('Please authenticate with Pi first to enable A2U payouts');
-      return;
-    }
-
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Enter a valid amount');
@@ -143,26 +137,63 @@ export default function DeveloperDashboard() {
 
     setIsWithdrawing(true);
     try {
-      const { error } = await supabase
+      // Always re-authenticate to ensure wallet_address scope is granted
+      toast.info('Authenticating with Pi...');
+      const auth = await authenticateWithPi();
+      if (!auth) {
+        toast.error('Pi authentication failed. Please try again in Pi Browser.');
+        return;
+      }
+
+      // Create pending withdrawal request
+      const { data: withdrawal, error: insertError } = await supabase
         .from('withdrawal_requests')
         .insert({
           developer_id: user.id,
           amount,
-          status: 'pending',
-          pi_wallet_address: openPayUsername.trim() && openPayAccount.trim()
-            ? `${openPayUsername.trim()} | ${openPayAccount.trim()}`
-            : null,
-          pi_uid: piUser.uid,
-        } as any);
+          status: 'processing',
+          pi_uid: auth.uid,
+        } as any)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      toast.success('Withdrawal request submitted');
+      // Trigger A2U payout immediately
+      toast.info('Sending Pi via A2U...');
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${baseUrl}/functions/v1/pi-a2u-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'send',
+          userUid: auth.uid,
+          amount,
+          memo: `Withdrawal for @${auth.username}`,
+          metadata: { withdrawal_id: withdrawal.id, developer_id: user.id },
+          supabaseUserId: user.id,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        await supabase.from('withdrawal_requests').update({ status: 'failed' }).eq('id', withdrawal.id);
+        throw new Error(result.error || 'A2U payment failed');
+      }
+
+      await supabase
+        .from('withdrawal_requests')
+        .update({ status: 'completed', txid: result.txid, processed_at: new Date().toISOString() })
+        .eq('id', withdrawal.id);
+
+      toast.success(`Sent ${amount} Pi! TX: ${result.txid.slice(0, 12)}...`);
       setWithdrawAmount('');
-      setOpenPayAccount('');
-      setOpenPayUsername('');
       loadDashboardData();
     } catch (err: any) {
+      console.error('Withdrawal error:', err);
       toast.error(err.message || 'Withdrawal failed');
     } finally {
       setIsWithdrawing(false);
