@@ -252,60 +252,36 @@ export default function DeveloperDashboard() {
         <p className="text-xs text-muted-foreground mb-6">Revenue split: 70% Developer / 30% Platform Fee</p>
 
         <div className="rounded-2xl bg-card p-6 border border-border mb-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Withdraw Earnings</h2>
-          
-          {/* Pi authentication for A2U payouts */}
-          {isPiReady && !piUser && (
-            <div className="mb-4 p-3 rounded-xl bg-secondary/50 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Authenticate with Pi to enable withdrawals via A2U</p>
-              <Button size="sm" variant="outline" onClick={authenticateWithPi} disabled={piLoading}>
-                {piLoading ? 'Connecting...' : 'Connect Pi'}
-              </Button>
-            </div>
-          )}
+          <h2 className="text-lg font-semibold text-foreground mb-2">Withdraw Earnings via A2U</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            One-tap withdrawal — Pi will be sent directly to your authenticated Pi wallet. No fields required.
+          </p>
+
           {!isPiReady && (
             <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-muted-foreground">Pi SDK not available. Please open this app in Pi Browser to withdraw.</p>
+              <p className="text-sm text-muted-foreground">Pi SDK not available. Open this app in Pi Browser to withdraw.</p>
             </div>
           )}
           {piUser && (
             <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-              <p className="text-sm text-foreground">✅ Pi connected: <span className="font-mono font-medium">@{piUser.username}</span> — withdrawals will be sent via A2U</p>
+              <p className="text-sm text-foreground">✅ Pi connected: <span className="font-mono font-medium">@{piUser.username}</span></p>
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label>OpenPay @Username (optional)</Label>
-              <Input
-                value={openPayUsername}
-                onChange={(e) => setOpenPayUsername(e.target.value)}
-                placeholder="@yourusername"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>OpenPay Account Number (optional)</Label>
-              <Input
-                value={openPayAccount}
-                onChange={(e) => setOpenPayAccount(e.target.value)}
-                placeholder="Enter account number"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Amount (Pi)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                max={availableBalance}
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder={`Max: ${availableBalance.toFixed(2)}`}
-              />
-            </div>
+          <div className="space-y-2 max-w-xs">
+            <Label>Amount (Pi)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max={availableBalance}
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              placeholder={`Max: ${availableBalance.toFixed(2)}`}
+            />
           </div>
-          <div className="mt-3 flex justify-end">
-            <Button onClick={handleWithdraw} disabled={isWithdrawing || availableBalance <= 0 || !piUser}>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleWithdraw} disabled={isWithdrawing || availableBalance <= 0 || !isPiReady}>
               {isWithdrawing ? 'Processing...' : 'Withdraw via A2U'}
             </Button>
           </div>
