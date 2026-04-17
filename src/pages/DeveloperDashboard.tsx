@@ -39,8 +39,6 @@ export default function DeveloperDashboard() {
   const [totalPlatformFee, setTotalPlatformFee] = useState(0);
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [openPayAccount, setOpenPayAccount] = useState('');
-  const [openPayUsername, setOpenPayUsername] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const { piUser, isPiReady, authenticateWithPi, piLoading } = usePiNetwork();
